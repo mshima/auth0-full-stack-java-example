@@ -65,7 +65,7 @@ jobs:
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-      - name: Build native images
+      - name: Build ${{ steps.executable.name }} native image
         run: mvn -B -ntp package "-Pnative,prod" -DskipTests "-Dnative-image-name=${{ steps.executable.name }}"
       - name: Archive binary
         uses: actions/upload-artifact@v3
