@@ -103,6 +103,7 @@
         <sonar-maven-plugin.version>3.9.1.2184</sonar-maven-plugin.version>
         <repackage.classifier/>
         <spring-native.version>0.11.3</spring-native.version>
+        <native-image-name>native-executable</native-image-name>
         <!-- jhipster-needle-maven-property -->
     </properties>
 
@@ -1337,7 +1338,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <imageName>native-executable</imageName>
+                            <imageName>${native-image-name}</imageName>
                             <buildArgs>
                                 <buildArg>--no-fallback --verbose -J-Xmx10g</buildArg>
                             </buildArgs>
