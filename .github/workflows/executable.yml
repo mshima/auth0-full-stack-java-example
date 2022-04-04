@@ -70,6 +70,7 @@ jobs:
       - name: Archive binary
         uses: actions/upload-artifact@v3
         with:
+          name: ${{ steps.executable.outputs.name }}
           path: target/${{ steps.executable.outputs.name }}
       - name: Upload release
         if: github.event.release.tag_name
