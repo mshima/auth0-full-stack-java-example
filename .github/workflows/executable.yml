@@ -1,0 +1,79 @@
+name: Generate Executables
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+permissions:
+  contents: write
+jobs:
+  build:
+    name: GraalVM - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2019]
+        graalvm-version: ['22.0.0.2']
+        java-version: ['11']
+        include:
+        - os: ubuntu-latest
+          executable-suffix: ''
+        - os: macos-latest
+          executable-suffix: ''
+        - os: windows-2019
+          executable-suffix: '.exe'
+    steps:
+      # OS customizations that may improve the build time.
+      #- name: Set up swap space
+      #  if: runner.os == 'Linux'
+      #  uses: pierotofy/set-swap-space@v1.0
+      #  with:
+      #    swap-size-gb: 10
+      #- name: Configure pagefile
+      #  uses: al-cheb/configure-pagefile-action@v1.2
+      #  if: runner.os == 'Windows'
+      #  with:
+      #    minimum-size: 10GB
+      #    maximum-size: 12GB
+      #- name: Set up pagefile
+      #  if: runner.os == 'Windows'
+      #  run: |
+      #    (Get-CimInstance Win32_PageFileUsage).AllocatedBaseSize
+
+      - uses: actions/checkout@v3
+      - id: executable
+        run: echo "::set-output name=name::foo-${{ runner.os }}-${{ github.event.release.tag_name || 'snapshot' }}-x86_64${{ matrix.executable-suffix }}"
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Set up GraalVM (Java ${{ matrix.java-version }})
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: '${{ matrix.graalvm-version }}'
+          java-version: '${{ matrix.java-version }}'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+      - name: Build native images
+        run: mvn -B -ntp package "-Pnative,prod" -DskipTests "-Dnative-maven-plugin.imageName=${{ steps.executable.name }}"
+      - name: Archive binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: steps.executable.name
+          path: target/${{ steps.executable.name }}
+      - name: Upload release
+        if: github.event.release.tag_name
+        run: gh release upload ${{ github.event.release.tag_name }} target/${{ steps.executable.name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
