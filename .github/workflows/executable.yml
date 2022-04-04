@@ -13,8 +13,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-2019]
-        graalvm-version: '22.0.0.2'
-        java-version: '11'
+        graalvm-version: ['22.0.0.2']
+        java-version: ['11']
         include:
         - os: ubuntu-latest
           executable-suffix: ''
