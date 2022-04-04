@@ -65,15 +65,15 @@ jobs:
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-      - name: Build ${{ steps.executable.name }} native image
-        run: mvn -B -ntp package "-Pnative,prod" -DskipTests "-Dnative-image-name=${{ steps.executable.name }}"
+      - name: Build ${{ steps.executable.outputs.name }} native image
+        run: mvn -B -ntp package "-Pnative,prod" -DskipTests "-Dnative-image-name=${{ steps.executable.outputs.name }}"
       - name: Archive binary
         uses: actions/upload-artifact@v3
         with:
-          name: steps.executable.name
-          path: target/${{ steps.executable.name }}
+          name: steps.executable.outputs.name
+          path: target/${{ steps.executable.outputs.name }}
       - name: Upload release
         if: github.event.release.tag_name
-        run: gh release upload ${{ github.event.release.tag_name }} target/${{ steps.executable.name }}
+        run: gh release upload ${{ github.event.release.tag_name }} target/${{ steps.executable.outputs.name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
